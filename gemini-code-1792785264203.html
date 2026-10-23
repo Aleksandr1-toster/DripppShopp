@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DrippShopp — Стильная одежда & Accessories</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap');
+    
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0b0f19;
+      color: #f3f4f6;
+    }
+
+    .glass-nav {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card {
+      background: rgba(30, 41, 59, 0.5);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-modal {
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .glow-effect {
+      box-shadow: 0 0 25px rgba(168, 85, 247, 0.25);
+    }
+
+    .product-card {
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .product-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 30px -10px rgba(168, 85, 247, 0.3);
+    }
+
+    .drawer {
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a855f7;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between overflow-x-hidden selection:bg-purple-500 selection:text-white">
+
+  <!-- Навигация (Header) -->
+  <header class="sticky top-0 z-40 glass-nav px-4 lg:px-8 py-3 transition-all">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      
+      <!-- Логотип -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-indigo-500 flex items-center justify-center text-white font-extrabold text-xl shadow-lg glow-effect animate-pulse">
+          D
+        </div>
+        <span class="text-2xl font-extrabold bg-gradient-to-r from-white via-purple-200 to-purple-400 bg-clip-text text-transparent tracking-wide">
+          DrippShopp
+        </span>
+      </div>
+
+      <!-- Поиск -->
+      <div class="flex-1 max-w-md mx-2">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Поиск вещей..." 
+                 class="w-full bg-slate-900/80 border border-slate-700/60 rounded-full pl-11 pr-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 transition-all">
+        </div>
+      </div>
+
+      <!-- Кнопки управления и меню -->
+      <div class="flex items-center gap-3">
+        
+        <!-- Кнопка админ-добавления товара -->
+        <button id="adminAddBtn" onclick="openModal('addProductModal')" class="hidden bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold text-xs px-3.5 py-2 rounded-lg transition shadow-md flex items-center gap-1.5">
+          <i class="fa-solid fa-plus"></i> <span class="hidden sm:inline">Товар</span>
+        </button>
+
+        <!-- Вход / Статус -->
+        <div id="authContainer">
+          <button onclick="openModal('authModal')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-purple-300 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 rounded-xl transition flex items-center gap-2">
+            <i class="fa-solid fa-right-to-bracket"></i>
+            <span id="authStatusText">Войти</span>
+          </button>
+        </div>
+
+        <!-- Гамбургер-меню (3 палочки) -->
+        <button onclick="toggleMenu()" class="w-10 h-10 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col justify-center items-center gap-1 transition text-purple-300">
+          <span class="w-5 h-0.5 bg-current rounded-full"></span>
+          <span class="w-5 h-0.5 bg-current rounded-full"></span>
+          <span class="w-5 h-0.5 bg-current rounded-full"></span>
+        </button>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- Выдвижное меню (Drawer) -->
+  <div id="menuDrawer" class="fixed inset-y-0 right-0 w-80 max-w-full bg-slate-900/95 border-l border-slate-800 z-50 transform translate-x-full drawer flex flex-col justify-between p-6 shadow-2xl backdrop-blur-2xl">
+    <div>
+      <div class="flex items-center justify-between pb-6 border-b border-slate-800">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-compass text-purple-500"></i> Навигация
+        </h3>
+        <button onclick="toggleMenu()" class="text-gray-400 hover:text-white text-xl">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="mt-6 space-y-3">
+        <!-- 1. Профиль -->
+        <button onclick="openTabModal('profileModal')" class="w-full flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 text-left transition group">
+          <div class="w-10 h-10 rounded-lg bg-purple-500/10 text-purple-400 flex items-center justify-center group-hover:bg-purple-500 group-hover:text-white transition">
+            <i class="fa-solid fa-user"></i>
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-white">1. Профиль</div>
+            <div class="text-xs text-gray-400">Данные и статус</div>
+          </div>
+        </button>
+
+        <!-- 2. Корзина -->
+        <button onclick="openTabModal('cartModal')" class="w-full flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 text-left transition group relative">
+          <div class="w-10 h-10 rounded-lg bg-pink-500/10 text-pink-400 flex items-center justify-center group-hover:bg-pink-500 group-hover:text-white transition">
+            <i class="fa-solid fa-cart-shopping"></i>
+          </div>
+          <div class="flex-1">
+            <div class="text-sm font-semibold text-white flex justify-between items-center">
+              2. Корзина
+              <span id="cartBadge" class="bg-pink-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">0</span>
+            </div>
+            <div class="text-xs text-gray-400">Товары и оформление</div>
+          </div>
+        </button>
+
+        <!-- 3. Баланс -->
+        <button onclick="openTabModal('balanceModal')" class="w-full flex items-center gap-4 p-3.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-slate-800 hover:border-purple-500/50 text-left transition group">
+          <div class="w-10 h-10 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white transition">
+            <i class="fa-solid fa-wallet"></i>
+          </div>
+          <div>
+            <div class="text-sm font-semibold text-white">3. Баланс</div>
+            <div class="text-xs text-emerald-400 font-medium" id="drawerBalance">0 ₽</div>
+          </div>
+        </button>
+
+        <!-- 4. Написать админу -->
+        <a href="https://t.me/gunnar_87" target="_blank" class="w-full flex items-center gap-4 p-3.5 rounded-xl bg-gradient-to-r from-sky-500/10 to-blue-500/10 hover:from-sky-500/20 hover:to-blue-500/20 border border-sky-500/30 text-left transition group">
+          <div class="w-10 h-10 rounded-lg bg-sky-500 text-white flex items-center justify-center shadow-lg shadow-sky-500/20">
+            <i class="fa-paper-plane fa-solid"></i>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-sky-400">4. Написать админу</div>
+            <div class="text-xs text-gray-400">Telegram @gunnar_87</div>
+          </div>
+        </a>
+
+        <!-- Управление ролями (Только для aleksandramp1908@gmail.com) -->
+        <button id="superAdminBtn" onclick="openTabModal('rolesModal')" class="hidden w-full flex items-center gap-4 p-3.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-left transition group">
+          <div class="w-10 h-10 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div>
+            <div class="text-sm font-bold text-amber-400">Управление ролями</div>
+            <div class="text-xs text-amber-300/70">Панель владельца</div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <div class="pt-6 border-t border-slate-800 text-xs text-gray-500 text-center">
+      DrippShopp v2.0 • Магазин одежды
+    </div>
+  </div>
+
+  <!-- Главный контент -->
+  <main class="max-w-7xl mx-auto px-4 lg:px-8 py-8 flex-1 w-full">
+    
+    <!-- Баннер -->
+    <div class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-purple-900/60 via-slate-900 to-indigo-900/60 border border-purple-500/20 p-8 mb-10 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 glow-effect">
+      <div class="space-y-2 max-w-xl z-10">
+        <span class="text-xs font-bold tracking-widest text-purple-400 uppercase bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">Новая коллекция</span>
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white leading-tight">Твой стиль в <span class="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">DrippShopp</span></h1>
+        <p class="text-gray-400 text-sm sm:text-base">Эксклюзивные вещи, быстрая доставка и поддержка 24/7.</p>
+      </div>
+      <div class="z-10">
+        <button onclick="document.getElementById('productsGrid').scrollIntoView({behavior: 'smooth'})" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold px-6 py-3 rounded-xl shadow-lg transition">
+          Перейти к шмоту
+        </button>
+      </div>
+    </div>
+
+    <!-- Заголовок -->
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-xl sm:text-2xl font-bold text-white flex items-center gap-2">
+        <i class="fa-solid fa-fire text-pink-500"></i> Каталог товаров
+      </h2>
+      <span class="text-xs text-gray-400" id="itemCount">Загрузка...</span>
+    </div>
+
+    <!-- Сетка товаров -->
+    <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
+  </main>
+
+  <footer class="bg-slate-950 border-t border-slate-800/80 mt-16 py-8 px-4 text-center text-xs text-gray-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div>© 2026 DrippShopp. Все права защищены.</div>
+      <a href="https://t.me/gunnar_87" target="_blank" class="hover:text-purple-400 transition flex items-center gap-2">
+        <i class="fa-brands fa-telegram text-base"></i> Telegram Admin (@gunnar_87)
+      </a>
+    </div>
+  </footer>
+
+  <!-- МОДАЛЬНЫЕ ОКНА -->
+
+  <!-- Авторизация -->
+  <div id="authModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl shadow-2xl relative border border-slate-700">
+      <button onclick="closeModal('authModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-2xl font-extrabold text-white mb-2 text-center">Вход в DrippShopp</h3>
+      <p class="text-xs text-gray-400 mb-6 text-center">Введите почту для авторизации</p>
+
+      <form onsubmit="handleAuth(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Email Почта</label>
+          <input type="email" id="authEmail" required placeholder="aleksandramp1908@gmail.com"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Пароль</label>
+          <input type="password" required placeholder="••••••••"
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-xl transition shadow-lg">
+          Войти в профиль
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Профиль -->
+  <div id="profileModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl shadow-2xl relative border border-slate-700">
+      <button onclick="closeModal('profileModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+        <i class="fa-solid fa-id-card text-purple-400"></i> Мой Профиль
+      </h3>
+
+      <div class="space-y-4">
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-gray-400">Почта (Email)</div>
+          <div class="text-base font-bold text-white mt-1" id="profileEmail">Не авторизован</div>
+        </div>
+
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-gray-400">Ваша роль</div>
+          <div class="text-sm font-bold text-purple-400 mt-1" id="profileRole">Покупатель</div>
+        </div>
+
+        <div class="bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+          <div class="text-xs text-gray-400">Куплено товаров</div>
+          <div class="text-lg font-bold text-emerald-400 mt-1" id="profilePurchases">0 шт.</div>
+        </div>
+
+        <button onclick="logout()" class="w-full bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 font-semibold py-2.5 rounded-xl transition text-sm">
+          Выйти из аккаунта
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Корзина -->
+  <div id="cartModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-lg p-6 rounded-2xl shadow-2xl relative border border-slate-700 flex flex-col max-h-[85vh]">
+      <button onclick="closeModal('cartModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-cart-shopping text-pink-500"></i> Корзина
+      </h3>
+
+      <div id="cartItemsList" class="flex-1 overflow-y-auto space-y-3 pr-1 my-2"></div>
+
+      <div class="border-t border-slate-800 pt-4 mt-2">
+        <div class="flex justify-between items-center mb-4">
+          <span class="text-gray-400 text-sm">Итого:</span>
+          <span class="text-2xl font-black text-emerald-400" id="cartTotalPrice">0 ₽</span>
+        </div>
+        <button onclick="checkoutCart()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-bold py-3 rounded-xl transition shadow-lg">
+          Оплатить с баланса
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Баланс -->
+  <div id="balanceModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl shadow-2xl relative border border-slate-700">
+      <button onclick="closeModal('balanceModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-xl font-bold text-white mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-wallet text-emerald-400"></i> Баланс аккаунта
+      </h3>
+      <p class="text-xs text-gray-400 mb-6">Доступно: <span class="text-emerald-400 font-bold" id="modalBalanceText">0 ₽</span></p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-2">Быстрое пополнение:</label>
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <button onclick="topUpBalance(1000)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white py-2 rounded-xl text-sm font-semibold transition">+1 000 ₽</button>
+            <button onclick="topUpBalance(3000)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white py-2 rounded-xl text-sm font-semibold transition">+3 000 ₽</button>
+            <button onclick="topUpBalance(5000)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white py-2 rounded-xl text-sm font-semibold transition">+5 000 ₽</button>
+          </div>
+        </div>
+
+        <div class="relative">
+          <input type="number" id="customTopUp" placeholder="Своя сумма" 
+                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-emerald-500">
+        </div>
+
+        <button onclick="handleCustomTopUp()" class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">
+          Пополнить
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Добавление товара (Только Админ) -->
+  <div id="addProductModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl shadow-2xl relative border border-slate-700">
+      <button onclick="closeModal('addProductModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-xl font-bold text-white mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-plus-circle text-purple-400"></i> Новый товар
+      </h3>
+
+      <form onsubmit="addNewProduct(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Название вещи</label>
+          <input type="text" id="prodTitle" required placeholder="Худи Oversize Dripp" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Цена (₽)</label>
+          <input type="number" id="prodPrice" required placeholder="4990" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Ссылка на фото (URL)</label>
+          <input type="url" id="prodImage" required placeholder="https://..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Описание</label>
+          <textarea id="prodDesc" rows="2" placeholder="Оверсайз крой, 100% хлопок..." class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-purple-500"></textarea>
+        </div>
+        <button type="submit" class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-xl transition shadow-lg mt-2">
+          Опубликовать
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Управление ролями (Супер-Админ) -->
+  <div id="rolesModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-modal w-full max-w-md p-6 rounded-2xl shadow-2xl relative border border-slate-700">
+      <button onclick="closeModal('rolesModal')" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <h3 class="text-xl font-bold text-amber-400 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved"></i> Назначение Админов
+      </h3>
+      <p class="text-xs text-gray-400 mb-4">Владелец: aleksandramp1908@gmail.com</p>
+
+      <form onsubmit="grantAdminRole(event)" class="space-y-3 mb-6">
+        <div>
+          <label class="block text-xs font-semibold text-gray-300 mb-1">Выдать права (Email)</label>
+          <div class="flex gap-2">
+            <input type="email" id="newAdminEmail" required placeholder="user@gmail.com" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2 text-sm text-white focus:outline-none focus:border-amber-500">
+            <button type="submit" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm transition">Выдать</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="text-xs font-bold text-gray-300 mb-2">Список всех Админов:</div>
+      <div id="adminsList" class="space-y-2 max-h-40 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- Toast Уведомления -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-800 border border-slate-700 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+    <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+    <span id="toastMessage" class="text-sm font-medium"></span>
+  </div>
+
+  <script>
+    const SUPER_ADMIN = 'aleksandramp1908@gmail.com';
+    
+    let currentUser = JSON.parse(localStorage.getItem('dripp_user')) || null;
+    let adminList = JSON.parse(localStorage.getItem('dripp_admins')) || [SUPER_ADMIN];
+    let cart = JSON.parse(localStorage.getItem('dripp_cart')) || [];
+    let userBalance = parseFloat(localStorage.getItem('dripp_balance')) || 5000;
+    let purchasesCount = parseInt(localStorage.getItem('dripp_purchases')) || 0;
+
+    let defaultProducts = [
+      { id: 1, title: 'Зипка Dripp Neon Black', price: 6990, image: 'https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600&auto=format&fit=crop', desc: 'Плотный оверсайз хлопок 450g.' },
+      { id: 2, title: 'Кроссовки Cyber Runner v2', price: 12490, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&auto=format&fit=crop', desc: 'Амортизирующая подошва и рефлектив.' },
+      { id: 3, title: 'Футболка Dark Graphic', price: 3490, image: 'https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop', desc: 'Шелкография с авторским принтом.' },
+      { id: 4, title: 'Штаны Cargo Tactical', price: 5990, image: 'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&auto=format&fit=crop', desc: 'Водоотталкивающий прочный материал.' },
+      { id: 5, title: 'Худи Oversize Purple Glow', price: 7290, image: 'https://images.unsplash.com/photo-1509967419530-da38b4704bc6?w=600&auto=format&fit=crop', desc: 'Яркий дизайн и мягкий начёс.' },
+      { id: 6, title: 'Кепка Dripp Streetwear', price: 2490, image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=600&auto=format&fit=crop', desc: 'Регулируемый размер, 100% хлопок.' }
+    ];
+
+    let products = JSON.parse(localStorage.getItem('dripp_products')) || defaultProducts;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!adminList.includes(SUPER_ADMIN)) {
+        adminList.push(SUPER_ADMIN);
+        localStorage.setItem('dripp_admins', JSON.stringify(adminList));
+      }
+      updateUserUI();
+      renderProducts(products);
+      updateCartUI();
+    });
+
+    function isAdmin() {
+      return currentUser && adminList.includes(currentUser.email.toLowerCase());
+    }
+
+    function isSuperAdmin() {
+      return currentUser && currentUser.email.toLowerCase() === SUPER_ADMIN.toLowerCase();
+    }
+
+    function updateUserUI() {
+      const authStatusText = document.getElementById('authStatusText');
+      const adminAddBtn = document.getElementById('adminAddBtn');
+      const superAdminBtn = document.getElementById('superAdminBtn');
+      const drawerBalance = document.getElementById('drawerBalance');
+      const modalBalanceText = document.getElementById('modalBalanceText');
+      
+      drawerBalance.textContent = userBalance.toLocaleString('ru-RU') + ' ₽';
+      modalBalanceText.textContent = userBalance.toLocaleString('ru-RU') + ' ₽';
+
+      if (currentUser) {
+        authStatusText.textContent = currentUser.email.split('@')[0];
+        document.getElementById('profileEmail').textContent = currentUser.email;
+        document.getElementById('profileRole').textContent = isSuperAdmin() ? 'Владелец (Супер-Админ)' : (isAdmin() ? 'Администратор' : 'Покупатель');
+        document.getElementById('profilePurchases').textContent = purchasesCount + ' шт.';
+
+        adminAddBtn.classList.toggle('hidden', !isAdmin());
+        superAdminBtn.classList.toggle('hidden', !isSuperAdmin());
+      } else {
+        authStatusText.textContent = 'Войти';
+        adminAddBtn.classList.add('hidden');
+        superAdminBtn.classList.add('hidden');
+        document.getElementById('profileEmail').textContent = 'Не авторизован';
+        document.getElementById('profileRole').textContent = 'Гость';
+      }
+
+      renderProducts(products);
+      renderAdminsList();
+    }
+
+    function renderProducts(items) {
+      const grid = document.getElementById('productsGrid');
+      const countLabel = document.getElementById('itemCount');
+      grid.innerHTML = '';
+      countLabel.textContent = `Всего вещей: ${items.length}`;
+
+      if (items.length === 0) {
+        grid.innerHTML = `<div class="col-span-full text-center py-12 text-gray-500">Товары не найдены</div>`;
+        return;
+      }
+
+      items.forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card glass-card rounded-2xl overflow-hidden flex flex-col justify-between relative group';
+        
+        card.innerHTML = `
+          <div>
+            <div class="relative aspect-square overflow-hidden bg-slate-900">
+              <img src="${product.image}" alt="${product.title}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500" onerror="this.src='https://images.unsplash.com/photo-1523381210434-271e8be1f52b?w=600'">
+              ${isAdmin() ? `
+                <button onclick="deleteProduct(${product.id})" class="absolute top-3 right-3 bg-red-600/80 hover:bg-red-600 text-white w-8 h-8 rounded-xl flex items-center justify-center backdrop-blur-md transition shadow-lg">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              ` : ''}
+            </div>
+            <div class="p-4">
+              <h3 class="font-bold text-white text-base mb-1 line-clamp-1">${product.title}</h3>
+              <p class="text-xs text-gray-400 line-clamp-2 mb-3">${product.desc || 'Стильная вещь из коллекции.'}</p>
+            </div>
+          </div>
+
+          <div class="p-4 pt-0 flex items-center justify-between gap-2">
+            <div>
+              <div class="text-[10px] text-gray-400 uppercase tracking-wider">Цена</div>
+              <div class="text-lg font-black text-white">${product.price.toLocaleString('ru-RU')} ₽</div>
+            </div>
+            <button onclick="addToCart(${product.id})" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition shadow-md flex items-center gap-1.5">
+              <i class="fa-solid fa-cart-plus"></i> Купить
+            </button>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function handleSearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = products.filter(p => 
+        p.title.toLowerCase().includes(query) || (p.desc && p.desc.toLowerCase().includes(query))
+      );
+      renderProducts(filtered);
+    }
+
+    function handleAuth(e) {
+      e.preventDefault();
+      const email = document.getElementById('authEmail').value.trim();
+      if (!email) return;
+
+      currentUser = { email: email };
+      localStorage.setItem('dripp_user', JSON.stringify(currentUser));
+      updateUserUI();
+      closeModal('authModal');
+      showToast(`Добро пожаловать, ${email.split('@')[0]}!`);
+    }
+
+    function logout() {
+      currentUser = null;
+      localStorage.removeItem('dripp_user');
+      updateUserUI();
+      closeModal('profileModal');
+      showToast('Вы вышли из аккаунта');
+    }
+
+    function grantAdminRole(e) {
+      e.preventDefault();
+      if (!isSuperAdmin()) return;
+
+      const emailInput = document.getElementById('newAdminEmail');
+      const email = emailInput.value.trim().toLowerCase();
+
+      if (email && !adminList.includes(email)) {
+        adminList.push(email);
+        localStorage.setItem('dripp_admins', JSON.stringify(adminList));
+        emailInput.value = '';
+        renderAdminsList();
+        updateUserUI();
+        showToast(`Пользователь ${email} теперь Админ!`);
+      }
+    }
+
+    function revokeAdminRole(email) {
+      if (!isSuperAdmin()) return;
+      if (email.toLowerCase() === SUPER_ADMIN.toLowerCase()) {
+        showToast('Нельзя снять права у Главного Владельца!', 'error');
+        return;
+      }
+
+      adminList = adminList.filter(a => a.toLowerCase() !== email.toLowerCase());
+      localStorage.setItem('dripp_admins', JSON.stringify(adminList));
+      renderAdminsList();
+      updateUserUI();
+      showToast(`Права у ${email} отозваны`);
+    }
+
+    function renderAdminsList() {
+      const container = document.getElementById('adminsList');
+      if (!container) return;
+      container.innerHTML = '';
+
+      adminList.forEach(email => {
+        const item = document.createElement('div');
+        item.className = 'flex items-center justify-between bg-slate-900 p-2.5 rounded-xl border border-slate-800 text-xs';
+        item.innerHTML = `
+          <span class="text-gray-200 font-medium">${email} ${email.toLowerCase() === SUPER_ADMIN.toLowerCase() ? '<span class="text-amber-400 font-bold">(Владелец)</span>' : ''}</span>
+          ${email.toLowerCase() !== SUPER_ADMIN.toLowerCase() ? `
+            <button onclick="revokeAdminRole('${email}')" class="text-red-400 hover:text-red-300 font-semibold text-[11px]">Снять</button>
+          ` : ''}
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function addNewProduct(e) {
+      e.preventDefault();
+      if (!isAdmin()) {
+        showToast('Только админ может добавлять товары!', 'error');
+        return;
+      }
+
+      const title = document.getElementById('prodTitle').value;
+      const price = parseFloat(document.getElementById('prodPrice').value);
+      const image = document.getElementById('prodImage').value;
+      const desc = document.getElementById('prodDesc').value;
+
+      products.unshift({ id: Date.now(), title, price, image, desc });
+      localStorage.setItem('dripp_products', JSON.stringify(products));
+      
+      renderProducts(products);
+      closeModal('addProductModal');
+      e.target.reset();
+      showToast('Товар успешно добавлен!');
+    }
+
+    function deleteProduct(id) {
+      if (!isAdmin()) return;
+      products = products.filter(p => p.id !== id);
+      localStorage.setItem('dripp_products', JSON.stringify(products));
+      renderProducts(products);
+      showToast('Товар удалён');
+    }
+
+    function addToCart(productId) {
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      const existing = cart.find(item => item.id === productId);
+      if (existing) {
+        existing.quantity += 1;
+      } else {
+        cart.push({ ...product, quantity: 1 });
+      }
+
+      saveCart();
+      showToast(`«${product.title}» добавлено в корзину`);
+    }
+
+    function updateCartQuantity(productId, delta) {
+      const item = cart.find(i => i.id === productId);
+      if (!item) return;
+
+      item.quantity += delta;
+      if (item.quantity <= 0) {
+        cart = cart.filter(i => i.id !== productId);
+      }
+
+      saveCart();
+    }
+
+    function saveCart() {
+      localStorage.setItem('dripp_cart', JSON.stringify(cart));
+      updateCartUI();
+    }
+
+    function updateCartUI() {
+      const badge = document.getElementById('cartBadge');
+      const list = document.getElementById('cartItemsList');
+      const totalPriceEl = document.getElementById('cartTotalPrice');
+
+      const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      badge.textContent = totalItems;
+      totalPriceEl.textContent = totalPrice.toLocaleString('ru-RU') + ' ₽';
+      list.innerHTML = '';
+
+      if (cart.length === 0) {
+        list.innerHTML = `<div class="text-center py-8 text-gray-500 text-sm">Корзина пуста</div>`;
+        return;
+      }
+
+      cart.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between bg-slate-900/80 p-3 rounded-xl border border-slate-800 gap-3';
+        div.innerHTML = `
+          <img src="${item.image}" class="w-12 h-12 object-cover rounded-lg bg-slate-800">
+          <div class="flex-1">
+            <div class="text-sm font-bold text-white line-clamp-1">${item.title}</div>
+            <div class="text-xs text-purple-400 font-semibold">${item.price.toLocaleString('ru-RU')} ₽</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="updateCartQuantity(${item.id}, -1)" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold text-xs">-</button>
+            <span class="text-xs font-bold text-white w-4 text-center">${item.quantity}</span>
+            <button onclick="updateCartQuantity(${item.id}, 1)" class="w-7 h-7 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-bold text-xs">+</button>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function checkoutCart() {
+      if (cart.length === 0) {
+        showToast('Корзина пуста!', 'error');
+        return;
+      }
+
+      const totalPrice = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+      if (userBalance < totalPrice) {
+        showToast('Недостаточно денег на балансе!', 'error');
+        openTabModal('balanceModal');
+        return;
+      }
+
+      userBalance -= totalPrice;
+      purchasesCount += cart.reduce((sum, item) => sum + item.quantity, 0);
+
+      localStorage.setItem('dripp_balance', userBalance);
+      localStorage.setItem('dripp_purchases', purchasesCount);
+
+      cart = [];
+      saveCart();
+      updateUserUI();
+      closeModal('cartModal');
+
+      showToast('Успешно оплачено! Напишите админу в ТГ для доставки.');
+    }
+
+    function topUpBalance(amount) {
+      userBalance += amount;
+      localStorage.setItem('dripp_balance', userBalance);
+      updateUserUI();
+      showToast(`Баланс пополнен на +${amount.toLocaleString('ru-RU')} ₽`);
+    }
+
+    function handleCustomTopUp() {
+      const input = document.getElementById('customTopUp');
+      const val = parseFloat(input.value);
+      if (val && val > 0) {
+        topUpBalance(val);
+        input.value = '';
+      }
+    }
+
+    function toggleMenu() {
+      document.getElementById('menuDrawer').classList.toggle('translate-x-full');
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).classList.add('hidden');
+    }
+
+    function openTabModal(modalId) {
+      toggleMenu();
+      openModal(modalId);
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      const msg = document.getElementById('toastMessage');
+      const icon = document.getElementById('toastIcon');
+
+      msg.textContent = message;
+      icon.className = type === 'error' ? 'fa-solid fa-circle-exclamation text-red-400 text-lg' : 'fa-solid fa-circle-check text-emerald-400 text-lg';
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
